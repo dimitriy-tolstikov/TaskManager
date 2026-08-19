@@ -15,16 +15,20 @@ import type { TaskDto } from "@/lib/apiClient";
 import { formatDueDate, isOverdue, PRIORITY_LABELS } from "@/lib/taskUtils";
 import { cn } from "@/lib/utils";
 
-interface TaskRowProps {
-  task: TaskDto;
+export interface TaskActions {
   onToggle: (task: TaskDto) => void;
   onOpen: (task: TaskDto) => void;
   onDelete: (task: TaskDto) => void;
 }
 
+interface TaskRowProps extends TaskActions {
+  task: TaskDto;
+  areaColor?: string;
+}
+
 const priorityVariant = { LOW: "outline", MED: "secondary", HIGH: "destructive" } as const;
 
-export function TaskRow({ task, onToggle, onOpen, onDelete }: TaskRowProps) {
+export function TaskRow({ task, areaColor, onToggle, onOpen, onDelete }: TaskRowProps) {
   const isDone = task.status === "DONE";
   const doneSubtasks = task.subtasks.filter((subtask) => subtask.done).length;
 
@@ -48,6 +52,9 @@ export function TaskRow({ task, onToggle, onOpen, onDelete }: TaskRowProps) {
           {task.title}
         </div>
         <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+          {areaColor && (
+            <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: areaColor }} />
+          )}
           <span>{task.project.name}</span>
           {task.subtasks.length > 0 && (
             <span>
