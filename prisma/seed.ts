@@ -15,6 +15,9 @@ async function main(): Promise<void> {
 
   await ensureInboxProject(user.id);
 
+  // Reset demo content on reseed: non-inbox areas cascade-delete projects and tasks.
+  await db.area.deleteMany({ where: { userId: user.id, position: { gte: 0 } } });
+
   const work = await db.area.create({
     data: { userId: user.id, name: "Работа", color: "#3b82f6", position: 0 },
   });

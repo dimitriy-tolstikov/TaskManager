@@ -5,13 +5,7 @@ import type { TaskPriority, TaskStatus } from "@prisma/client";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 import type { TagDto, TaskFilterState } from "@/lib/apiClient";
 import { PRIORITY_LABELS, STATUS_LABELS } from "@/lib/taskUtils";
 
@@ -47,7 +41,8 @@ export function TaskFiltersPanel({ filters, tags, onChange }: TaskFiltersPanelPr
         }
       >
         <SelectTrigger aria-label="Фильтр по статусу">
-          <SelectValue />
+          {/* Radix renders the raw value before content mounts, so set the label explicitly */}
+          {filters.status ? STATUS_LABELS[filters.status] : "Любой статус"}
         </SelectTrigger>
         <SelectContent>
           <SelectItem value={ALL}>Любой статус</SelectItem>
@@ -65,7 +60,7 @@ export function TaskFiltersPanel({ filters, tags, onChange }: TaskFiltersPanelPr
         }
       >
         <SelectTrigger aria-label="Фильтр по приоритету">
-          <SelectValue />
+          {filters.priority ? PRIORITY_LABELS[filters.priority] : "Любой приоритет"}
         </SelectTrigger>
         <SelectContent>
           <SelectItem value={ALL}>Любой приоритет</SelectItem>
@@ -81,9 +76,7 @@ export function TaskFiltersPanel({ filters, tags, onChange }: TaskFiltersPanelPr
           value={filters.tag ?? ALL}
           onValueChange={(value) => patch({ tag: !value || value === ALL ? undefined : value })}
         >
-          <SelectTrigger aria-label="Фильтр по тегу">
-            <SelectValue />
-          </SelectTrigger>
+          <SelectTrigger aria-label="Фильтр по тегу">{filters.tag ?? "Любой тег"}</SelectTrigger>
           <SelectContent>
             <SelectItem value={ALL}>Любой тег</SelectItem>
             {tags.map((tag) => (
