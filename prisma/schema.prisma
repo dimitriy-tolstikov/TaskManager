@@ -18,6 +18,7 @@ model User {
   tags              Tag[]
   timeEntries       TimeEntry[]
   pushSubscriptions PushSubscription[]
+  goals             Goal[]
 }
 
 model Area {
@@ -29,6 +30,8 @@ model Area {
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   projects Project[]
 
+  goalTargets GoalTarget[]
+
   @@index([userId])
 }
 
@@ -39,6 +42,8 @@ model Project {
   archived Boolean @default(false)
   area     Area    @relation(fields: [areaId], references: [id], onDelete: Cascade)
   tasks    Task[]
+
+  goalTargets GoalTarget[]
 
   @@index([areaId])
 }
@@ -154,4 +159,47 @@ model PushSubscription {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+// Goal times are minutes from midnight (0..1439); daysOfWeek uses JS getDay (0 = Sunday), empty = daily.
+model Goal {
+  id         String         @id @default(cuid())
+  userId     String
+  name       String
+  startTime  Int
+  endTime    Int
+  daysOfWeek Int[]
+  active     Boolean        @default(true)
+  createdAt  DateTime       @default(now())
+  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  targets    GoalTarget[]
+  instances  GoalInstance[]
+
+  @@index([userId])
+}
+
+// Exactly one of areaId/projectId is set — enforced by the zod schema and the service.
+model GoalTarget {
+  id            String   @id @default(cuid())
+  goalId        String
+  areaId        String?
+  projectId     String?
+  requiredCount Int
+  goal          Goal     @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  area          Area?    @relation(fields: [areaId], references: [id], onDelete: Cascade)
+  project       Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([goalId])
+}
+
+model GoalInstance {
+  id             String    @id @default(cuid())
+  goalId         String
+  windowStart    DateTime
+  windowEnd      DateTime
+  acknowledgedAt DateTime?
+  goal           Goal      @relation(fields: [goalId], references: [id], onDelete: Cascade)
+
+  @@unique([goalId, windowStart])
+  @@index([goalId, windowEnd])
 }
