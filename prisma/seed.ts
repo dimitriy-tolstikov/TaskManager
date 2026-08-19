@@ -17,6 +17,8 @@ async function main(): Promise<void> {
 
   // Reset demo content on reseed: non-inbox areas cascade-delete projects and tasks.
   await db.area.deleteMany({ where: { userId: user.id, position: { gte: 0 } } });
+  // RecurrenceRule has no cascade from tasks, so drop orphaned rules explicitly.
+  await db.recurrenceRule.deleteMany({ where: { tasks: { none: {} } } });
 
   const work = await db.area.create({
     data: { userId: user.id, name: "Работа", color: "#3b82f6", position: 0 },
@@ -55,6 +57,23 @@ async function main(): Promise<void> {
       title: "Настроить аналитику",
       status: "TODO",
       priority: "MED",
+    },
+  });
+
+  const weeklyStatusRule = await db.recurrenceRule.create({
+    data: {
+      rrule: "FREQ=WEEKLY",
+      nextRunAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    },
+  });
+  await db.task.create({
+    data: {
+      projectId: website.id,
+      title: "Еженедельный статус",
+      status: "TODO",
+      priority: "MED",
+      dueAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      recurrenceId: weeklyStatusRule.id,
     },
   });
 
