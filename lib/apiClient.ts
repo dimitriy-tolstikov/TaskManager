@@ -1,5 +1,7 @@
 import type { TaskPriority, TaskStatus } from "@prisma/client";
 
+import type { RecurrenceKind } from "@/lib/recurrence";
+
 export interface ProjectDto {
   id: string;
   areaId: string;
@@ -42,6 +44,7 @@ export interface TaskDto {
   subtasks: SubtaskDto[];
   tags: { tag: TagDto }[];
   project: { id: string; name: string; areaId: string };
+  recurrence: { id: string; rrule: string } | null;
 }
 
 export interface TaskFilterState {
@@ -52,6 +55,8 @@ export interface TaskFilterState {
   tag?: string;
   q?: string;
   overdue?: boolean;
+  dueFrom?: string;
+  dueTo?: string;
 }
 
 export interface CreateTaskPayload {
@@ -69,6 +74,7 @@ export interface UpdateTaskPayload {
   dueAt?: string | null;
   estimateMin?: number | null;
   tags?: string[];
+  recurrence?: RecurrenceKind;
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -92,6 +98,8 @@ export function buildTaskQuery(filters: TaskFilterState): string {
   if (filters.tag) params.set("tag", filters.tag);
   if (filters.q) params.set("q", filters.q);
   if (filters.overdue) params.set("overdue", "true");
+  if (filters.dueFrom) params.set("dueFrom", filters.dueFrom);
+  if (filters.dueTo) params.set("dueTo", filters.dueTo);
   const query = params.toString();
   return query ? `?${query}` : "";
 }

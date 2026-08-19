@@ -3,16 +3,17 @@ import type { Prisma, Project, Task, TaskStatus } from "@prisma/client";
 import { db } from "@/lib/db";
 import { NotFoundError, ValidationError } from "@/lib/errors";
 import { ensureInboxProject, getOwnedProject } from "@/lib/services/projectService";
+import {
+  completeRecurringTask,
+  deleteRuleIfUnused,
+  isCompletingRecurringTask,
+  syncRecurrenceRule,
+} from "@/lib/services/recurrenceService";
 import { resolveTagIds } from "@/lib/services/tagService";
+import { taskInclude, type TaskWithRelations } from "@/lib/services/taskInclude";
 import type { CreateTaskInput, TaskFiltersInput, UpdateTaskInput } from "@/lib/validation/tasks";
 
-const taskInclude = {
-  subtasks: { orderBy: { position: "asc" } },
-  tags: { include: { tag: true } },
-  project: { select: { id: true, name: true, areaId: true } },
-} satisfies Prisma.TaskInclude;
-
-export type TaskWithRelations = Prisma.TaskGetPayload<{ include: typeof taskInclude }>;
+export type { TaskWithRelations } from "@/lib/services/taskInclude";
 
 export function listTasks(userId: string, filters: TaskFiltersInput): Promise<TaskWithRelations[]> {
   return db.task.findMany({
@@ -31,8 +32,17 @@ function buildTaskWhere(userId: string, filters: TaskFiltersInput): Prisma.TaskW
     ...(filters.priority ? { priority: filters.priority } : {}),
     ...(filters.tag ? { tags: { some: { tag: { userId, name: filters.tag } } } } : {}),
     ...(filters.q ? { OR: searchClauses(filters.q) } : {}),
-    ...(isOverdue ? { dueAt: { lt: new Date() } } : {}),
+    ...dueAtWhere(filters, isOverdue),
   };
+}
+
+function dueAtWhere(filters: TaskFiltersInput, isOverdue: boolean) {
+  const dueAt: Prisma.DateTimeFilter = {
+    ...(isOverdue ? { lt: new Date() } : {}),
+    ...(filters.dueFrom ? { gte: filters.dueFrom } : {}),
+    ...(filters.dueTo ? { lte: filters.dueTo } : {}),
+  };
+  return Object.keys(dueAt).length > 0 ? { dueAt } : {};
 }
 
 function searchClauses(q: string): Prisma.TaskWhereInput[] {
@@ -107,11 +117,20 @@ export async function updateTask(
     await getOwnedProject(userId, input.projectId);
   }
   const tagIds = input.tags ? await resolveTagIds(userId, input.tags) : null;
-  return db.task.update({
+  const updateData = buildUpdateData(input, current, tagIds);
+  if (isCompletingRecurringTask(current, input)) {
+    return completeRecurringTask(current, input, updateData, tagIds);
+  }
+  const recurrence = await syncRecurrenceRule(current, input);
+  const updated = await db.task.update({
     where: { id: current.id },
-    data: buildUpdateData(input, current, tagIds),
+    data: { ...updateData, ...recurrence.data },
     include: taskInclude,
   });
+  if (recurrence.orphanRuleId) {
+    await deleteRuleIfUnused(recurrence.orphanRuleId);
+  }
+  return updated;
 }
 
 function buildUpdateData(
@@ -148,4 +167,7 @@ function statusTransition(next: TaskStatus | undefined, currentStatus: TaskStatu
 export async function deleteTask(userId: string, taskId: string): Promise<void> {
   const task = await getOwnedTask(userId, taskId);
   await db.task.delete({ where: { id: task.id } });
+  if (task.recurrenceId) {
+    await deleteRuleIfUnused(task.recurrenceId);
+  }
 }
