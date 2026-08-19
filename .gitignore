@@ -28,3 +28,10 @@ Thumbs.db
 coverage/
 playwright-report/
 test-results/
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
