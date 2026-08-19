@@ -10,6 +10,9 @@ export const STATUS_LABELS: Record<TaskStatus, string> = {
   CANCELLED: "Отменено",
 };
 
+// CANCELLED is intentionally not a kanban column: cancelled tasks stay visible in the list view.
+export const KANBAN_COLUMNS = ["BACKLOG", "TODO", "IN_PROGRESS", "DONE"] as const;
+
 export const PRIORITY_LABELS: Record<TaskPriority, string> = {
   LOW: "Низкий",
   MED: "Средний",

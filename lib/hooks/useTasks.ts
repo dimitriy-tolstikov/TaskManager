@@ -25,5 +25,5 @@ export function useTasks(filters: TaskFilterState) {
     return () => clearTimeout(timer);
   }, [refresh]);
 
-  return { tasks, isLoading, refresh };
+  return { tasks, isLoading, refresh, setTasks };
 }
