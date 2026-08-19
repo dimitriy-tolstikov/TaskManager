@@ -1,28 +1,24 @@
 "use client";
 
-import type { TaskStatus } from "@prisma/client";
 import { useCallback, useEffect, useState } from "react";
 
+import { CalendarView } from "@/components/calendar/CalendarView";
 import { KanbanBoard } from "@/components/kanban/KanbanBoard";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { QuickAdd } from "@/components/tasks/QuickAdd";
 import { TaskDialog } from "@/components/tasks/TaskDialog";
 import { TaskFiltersPanel } from "@/components/tasks/TaskFiltersPanel";
 import { TaskList } from "@/components/tasks/TaskList";
-import type { TaskActions } from "@/components/tasks/TaskRow";
 import { ViewTabs, type TaskView } from "@/components/tasks/ViewTabs";
 import { TodayView } from "@/components/today/TodayView";
+import { listTags, type AreaDto, type TagDto, type TaskFilterState } from "@/lib/apiClient";
 import {
-  createTask,
-  deleteTask,
-  listTags,
-  updateTask,
-  type AreaDto,
-  type TagDto,
-  type TaskDto,
-  type TaskFilterState,
-} from "@/lib/apiClient";
+  calendarRangeFilters,
+  initialCalendarState,
+  type CalendarState,
+} from "@/lib/calendarUtils";
 import { useAreas } from "@/lib/hooks/useAreas";
+import { useTaskActions } from "@/lib/hooks/useTaskActions";
 import { useTasks } from "@/lib/hooks/useTasks";
 
 function viewHeading(areas: AreaDto[], filters: TaskFilterState): string {
@@ -39,16 +35,32 @@ function viewHeading(areas: AreaDto[], filters: TaskFilterState): string {
 
 // The Today view derives its sections from due dates, so the status/overdue
 // panel filters would only break it; the rest (area, project, search) applies.
-function todayFilters(filters: TaskFilterState): TaskFilterState {
-  return { ...filters, status: undefined, overdue: undefined };
+// The Calendar view additionally limits tasks to the visible date range.
+function scopedFilters(
+  view: TaskView,
+  filters: TaskFilterState,
+  calendar: CalendarState,
+): TaskFilterState {
+  if (view === "today") {
+    return { ...filters, status: undefined, overdue: undefined };
+  }
+  if (view === "calendar") {
+    return { ...filters, ...calendarRangeFilters(calendar) };
+  }
+  return filters;
 }
 
 export function TasksApp({ userEmail }: { userEmail: string }) {
   const { areas, refresh: refreshAreas } = useAreas();
   const [filters, setFilters] = useState<TaskFilterState>({});
   const [view, setView] = useState<TaskView>("list");
-  const effectiveFilters = view === "today" ? todayFilters(filters) : filters;
-  const { tasks, isLoading, refresh: refreshTasks, setTasks } = useTasks(effectiveFilters);
+  const [calendar, setCalendar] = useState<CalendarState>(initialCalendarState);
+  const {
+    tasks,
+    isLoading,
+    refresh: refreshTasks,
+    setTasks,
+  } = useTasks(scopedFilters(view, filters, calendar));
   const [tags, setTags] = useState<TagDto[]>([]);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const selectedTask = tasks.find((task) => task.id === selectedTaskId) ?? null;
@@ -62,40 +74,14 @@ export function TasksApp({ userEmail }: { userEmail: string }) {
     void listTags().then(setTags);
   }, []);
 
-  async function handleQuickAdd(title: string) {
-    await createTask({ title, projectId: filters.projectId, areaId: filters.areaId });
-    await refreshData();
-  }
-
-  async function handleToggle(task: TaskDto) {
-    await updateTask(task.id, { status: task.status === "DONE" ? "TODO" : "DONE" });
-    await refreshTasks();
-  }
-
-  async function handleDelete(task: TaskDto) {
-    if (window.confirm(`Удалить задачу «${task.title}»?`)) {
-      await deleteTask(task.id);
-      await refreshData();
-    }
-  }
-
-  async function handleStatusChange(task: TaskDto, status: TaskStatus) {
-    // Optimistic column move; roll back to the previous state on failure.
-    const previous = tasks;
-    setTasks(tasks.map((item) => (item.id === task.id ? { ...item, status } : item)));
-    try {
-      await updateTask(task.id, { status });
-    } catch (error) {
-      setTasks(previous);
-      window.alert(error instanceof Error ? error.message : "Что-то пошло не так");
-    }
-  }
-
-  const actions: TaskActions = {
-    onToggle: (task) => void handleToggle(task),
+  const { actions, onQuickAdd, onStatusChange, onMoveToDay } = useTaskActions({
+    tasks,
+    filters,
+    setTasks,
+    refreshTasks,
+    refreshData,
     onOpen: (task) => setSelectedTaskId(task.id),
-    onDelete: (task) => void handleDelete(task),
-  };
+  });
 
   return (
     <div className="flex">
@@ -111,7 +97,7 @@ export function TasksApp({ userEmail }: { userEmail: string }) {
           <h1 className="text-lg font-semibold">{viewHeading(areas, filters)}</h1>
           <ViewTabs view={view} onChange={setView} />
         </div>
-        <QuickAdd onAdd={handleQuickAdd} />
+        <QuickAdd onAdd={onQuickAdd} />
         {view !== "today" && (
           <TaskFiltersPanel filters={filters} tags={tags} onChange={setFilters} />
         )}
@@ -120,12 +106,22 @@ export function TasksApp({ userEmail }: { userEmail: string }) {
           <KanbanBoard
             tasks={tasks}
             isLoading={isLoading}
-            onStatusChange={(task, status) => void handleStatusChange(task, status)}
+            onStatusChange={onStatusChange}
             onOpen={actions.onOpen}
           />
         )}
         {view === "today" && (
           <TodayView tasks={tasks} areas={areas} isLoading={isLoading} actions={actions} />
+        )}
+        {view === "calendar" && (
+          <CalendarView
+            tasks={tasks}
+            areas={areas}
+            isLoading={isLoading}
+            state={calendar}
+            onStateChange={setCalendar}
+            actions={{ onOpen: actions.onOpen, onMove: onMoveToDay }}
+          />
         )}
       </main>
       <TaskDialog

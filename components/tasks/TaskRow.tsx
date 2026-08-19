@@ -1,6 +1,6 @@
 "use client";
 
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, Repeat } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -65,6 +65,9 @@ export function TaskRow({ task, areaColor, onToggle, onOpen, onDelete }: TaskRow
             <span className={cn(isOverdue(task) && "font-medium text-destructive")}>
               · {formatDueDate(task.dueAt)}
             </span>
+          )}
+          {task.recurrence && (
+            <Repeat className="size-3.5 shrink-0" aria-label="Повторяющаяся задача" />
           )}
         </div>
       </div>

@@ -191,4 +191,15 @@ describe("listTasks", () => {
       tags: { some: { tag: { userId, name: "срочно" } } },
     });
   });
+
+  it("filters by due date range", async () => {
+    const dueFrom = new Date("2026-08-17T00:00:00.000Z");
+    const dueTo = new Date("2026-08-23T23:59:59.999Z");
+
+    await listTasks(userId, { dueFrom, dueTo });
+
+    expect(taskFindMany.mock.calls[0][0]?.where).toMatchObject({
+      dueAt: { gte: dueFrom, lte: dueTo },
+    });
+  });
 });

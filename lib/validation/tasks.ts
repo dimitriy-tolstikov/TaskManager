@@ -1,8 +1,11 @@
 import { TaskPriority, TaskStatus } from "@prisma/client";
 import { z } from "zod";
 
+import { RECURRENCE_KINDS } from "@/lib/recurrence";
+
 const titleSchema = z.string().min(1, "Введите название задачи").max(300);
 const tagNameSchema = z.string().min(1).max(50);
+const recurrenceSchema = z.enum(RECURRENCE_KINDS);
 
 export const createTaskSchema = z.object({
   title: titleSchema,
@@ -25,6 +28,7 @@ export const updateTaskSchema = z.object({
   dueAt: z.coerce.date().nullish(),
   estimateMin: z.number().int().min(0).max(100000).nullish(),
   tags: z.array(tagNameSchema).max(20).optional(),
+  recurrence: recurrenceSchema.optional(),
 });
 
 /** Filters of GET /api/tasks; `overdue` arrives as the literal query string "true". */
@@ -36,6 +40,8 @@ export const taskFiltersSchema = z.object({
   tag: z.string().optional(),
   q: z.string().max(200).optional(),
   overdue: z.literal("true").optional(),
+  dueFrom: z.coerce.date().optional(),
+  dueTo: z.coerce.date().optional(),
 });
 
 export type CreateTaskInput = z.infer<typeof createTaskSchema>;

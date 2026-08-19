@@ -19,6 +19,7 @@ function makeTask(partial: Partial<TaskDto> & { id: string }): TaskDto {
     subtasks: [],
     tags: [],
     project: { id: "project-1", name: "Проект", areaId: "area-1" },
+    recurrence: null,
     ...partial,
   };
 }
