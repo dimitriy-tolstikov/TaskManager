@@ -1,0 +1,157 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String             @id @default(cuid())
+  email             String             @unique
+  passwordHash      String
+  name              String
+  theme             String             @default("system")
+  createdAt         DateTime           @default(now())
+  areas             Area[]
+  tags              Tag[]
+  timeEntries       TimeEntry[]
+  pushSubscriptions PushSubscription[]
+}
+
+model Area {
+  id       String    @id @default(cuid())
+  userId   String
+  name     String
+  color    String
+  position Int       @default(0)
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projects Project[]
+
+  @@index([userId])
+}
+
+model Project {
+  id       String  @id @default(cuid())
+  areaId   String
+  name     String
+  archived Boolean @default(false)
+  area     Area    @relation(fields: [areaId], references: [id], onDelete: Cascade)
+  tasks    Task[]
+
+  @@index([areaId])
+}
+
+enum TaskStatus {
+  BACKLOG
+  TODO
+  IN_PROGRESS
+  DONE
+  CANCELLED
+}
+
+enum TaskPriority {
+  LOW
+  MED
+  HIGH
+}
+
+model Task {
+  id           String          @id @default(cuid())
+  projectId    String
+  title        String
+  description  String          @default("")
+  status       TaskStatus      @default(BACKLOG)
+  priority     TaskPriority    @default(MED)
+  dueAt        DateTime?
+  estimateMin  Int?
+  position     Int             @default(0)
+  recurrenceId String?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  completedAt  DateTime?
+  project      Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  recurrence   RecurrenceRule? @relation(fields: [recurrenceId], references: [id], onDelete: SetNull)
+  subtasks     Subtask[]
+  tags         TaskTag[]
+  reminders    Reminder[]
+  timeEntries  TimeEntry[]
+
+  @@index([projectId, status])
+  @@index([dueAt])
+}
+
+model Subtask {
+  id       String @id @default(cuid())
+  taskId   String
+  title    String
+  done     Boolean @default(false)
+  position Int     @default(0)
+  task     Task    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+}
+
+model Tag {
+  id     String    @id @default(cuid())
+  userId String
+  name   String
+  user   User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tasks  TaskTag[]
+
+  @@unique([userId, name])
+}
+
+model TaskTag {
+  taskId String
+  tagId  String
+  task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([taskId, tagId])
+}
+
+model RecurrenceRule {
+  id        String    @id @default(cuid())
+  rrule     String
+  nextRunAt DateTime?
+  tasks     Task[]
+}
+
+model Reminder {
+  id        String    @id @default(cuid())
+  taskId    String
+  offsetMin Int
+  sentAt    DateTime?
+  task      Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([sentAt])
+  @@index([taskId])
+}
+
+model TimeEntry {
+  id          String    @id @default(cuid())
+  taskId      String
+  userId      String
+  startedAt   DateTime  @default(now())
+  endedAt     DateTime?
+  durationMin Int?
+  task        Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, startedAt])
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  userAgent String   @default("")
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
