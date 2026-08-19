@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { hashPassword } from "@/lib/services/authService";
+import { ensureInboxProject } from "@/lib/services/projectService";
 
 async function main(): Promise<void> {
   const user = await db.user.upsert({
@@ -11,6 +12,8 @@ async function main(): Promise<void> {
       passwordHash: await hashPassword("demo12345"),
     },
   });
+
+  await ensureInboxProject(user.id);
 
   const work = await db.area.create({
     data: { userId: user.id, name: "Работа", color: "#3b82f6", position: 0 },

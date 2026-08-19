@@ -2,6 +2,11 @@ import bcrypt from "bcryptjs";
 
 import { db } from "@/lib/db";
 import { ConflictError, UnauthorizedError } from "@/lib/errors";
+import {
+  INBOX_AREA_COLOR,
+  INBOX_AREA_NAME,
+  INBOX_PROJECT_NAME,
+} from "@/lib/services/projectService";
 import type { LoginInput, RegisterInput } from "@/lib/validation/auth";
 
 const PASSWORD_SALT_ROUNDS = 10;
@@ -22,8 +27,21 @@ export async function registerUser(input: RegisterInput): Promise<AuthUser> {
     throw new ConflictError("Пользователь с таким email уже существует");
   }
   const passwordHash = await hashPassword(input.password);
+  // Every user starts with an inbox project so quick add works out of the box.
   const user = await db.user.create({
-    data: { email: input.email, name: input.name, passwordHash },
+    data: {
+      email: input.email,
+      name: input.name,
+      passwordHash,
+      areas: {
+        create: {
+          name: INBOX_AREA_NAME,
+          color: INBOX_AREA_COLOR,
+          position: -1,
+          projects: { create: { name: INBOX_PROJECT_NAME } },
+        },
+      },
+    },
   });
   return { id: user.id, email: user.email, name: user.name };
 }
