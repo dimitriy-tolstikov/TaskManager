@@ -85,9 +85,13 @@ TaskManager/
 
 Каждая итерация — работающее приложение, проверяемое вручную + тесты на новую логику.
 
-**M0. Каркас (0.5–1 день)**
-- Инициализация Next.js + Tailwind + shadcn, Prisma + PostgreSQL, docker-compose (app, worker, db)
-- Auth: регистрация/вход/выход, middleware защиты роутов
+**M0. Каркас (1–1.5 дня)**
+- Инициализация Next.js + Tailwind + shadcn, Prisma + PostgreSQL, docker-compose (app, worker, db) + docker-compose.dev.yml (только БД для разработки)
+- Auth: регистрация/вход/выход (email+пароль, bcrypt, JWT в httpOnly-cookie), middleware защиты роутов
+- Фундамент качества: ESLint (strict + лимиты размеров) + Prettier + Husky + lint-staged + commitlint + EditorConfig
+- Тесты с первого дня: Vitest (конфиг + образцовые тесты сервиса), Playwright (конфиг + smoke-скелет)
+- CI (GitHub Actions): lint + typecheck + test + build
+- `.env.example`, Prisma seed (демо-пользователь + задачи), README с инструкцией запуска
 - Покрывает: FR-0.1, FR-0.2
 
 **M1. Ядро задач (2–3 дня)**
