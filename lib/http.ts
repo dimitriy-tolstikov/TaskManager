@@ -3,6 +3,11 @@ import { ZodError } from "zod";
 
 import { ConflictError, NotFoundError, UnauthorizedError, ValidationError } from "@/lib/errors";
 
+/** 401 shorthand for route handlers: request without a valid session. */
+export function unauthorizedResponse(): NextResponse {
+  return NextResponse.json({ error: "Требуется вход" }, { status: 401 });
+}
+
 /** Maps domain/validation errors to HTTP responses in a single place. */
 export function errorResponse(error: unknown): NextResponse {
   if (error instanceof ZodError) {
