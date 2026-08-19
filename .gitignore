@@ -1,0 +1,30 @@
+# dependencies
+node_modules/
+
+# builds
+.next/
+out/
+dist/
+worker/dist/
+
+# env & secrets
+.env
+.env.*
+!.env.example
+
+# prisma
+prisma/*.db
+
+# logs
+*.log
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# test artifacts
+coverage/
+playwright-report/
+test-results/
