@@ -27,6 +27,24 @@ async function main(): Promise<void> {
     data: { userId: user.id, name: "Учёба", color: "#22c55e", position: 1 },
   });
 
+  // The area reset above cascade-deletes goal targets, so recreate the demo goal on every reseed.
+  await db.goal.deleteMany({ where: { userId: user.id, name: "Утро 6–9" } });
+  await db.goal.create({
+    data: {
+      userId: user.id,
+      name: "Утро 6–9",
+      startTime: 360, // 06:00, minutes from midnight
+      endTime: 540, // 09:00
+      daysOfWeek: [],
+      targets: {
+        create: [
+          { areaId: work.id, requiredCount: 1 },
+          { areaId: study.id, requiredCount: 1 },
+        ],
+      },
+    },
+  });
+
   const website = await db.project.create({
     data: { areaId: work.id, name: "Сайт компании" },
   });
