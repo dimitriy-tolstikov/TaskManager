@@ -12,7 +12,7 @@ test("logged-in user sees quick add and the task list", async ({ page }) => {
 
   await expect(page.getByLabel("Быстрое добавление задачи")).toBeVisible();
   await expect(page.getByLabel("Поиск задач")).toBeVisible();
-  await expect(page.getByText("Все задачи")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Все задачи" })).toBeVisible();
 });
 
 test("quick add creates a task that appears in the list", async ({ page }) => {
