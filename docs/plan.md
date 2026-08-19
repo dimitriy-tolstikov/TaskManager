@@ -26,8 +26,10 @@
 
 - **app** — Next.js (App Router, TypeScript): страницы (React Server Components + клиентские компоненты), API в route handlers (`app/api/...`). Бизнес-логика вынесена в слой сервисов (`lib/services/`), чтобы route handlers оставались тонкими.
 - **worker** — отдельный Node-процесс: раз в минуту находит напоминания, которые пора отправить, и шлёт Web Push; помечает отправленные. Тот же код доступа к БД (общий пакет Prisma).
-- **БД** — PostgreSQL 16, доступ через Prisma (миграции в репозитории).
+- **БД** — PostgreSQL, доступ через Prisma (миграции в репозитории).
 - **Service worker** — минимальный: только приём push и показ notification, без офлайн-кэша.
+
+**Окружения.** Разработка — без Docker: локально установленная PostgreSQL (`localhost:5432`, пользователь `postgres`, пароль `postgres`, БД `taskmanager`), app и worker запускаются напрямую (`npm run dev`). Docker (docker-compose: app + worker + postgres) отложен на этап деплоя — файлы `Dockerfile`/`docker-compose.yml` лежат в репозитории, но в разработке не используются и пока не верифицированы.
 
 ### Структура репозитория
 

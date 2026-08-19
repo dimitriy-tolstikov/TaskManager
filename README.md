@@ -8,17 +8,20 @@
 ## Требования
 
 - Node.js 20+
-- Docker + Docker Compose (для PostgreSQL и полного запуска)
+- Локально установленная PostgreSQL (по умолчанию `localhost:5432`, пользователь `postgres`, пароль `postgres`)
 
-## Быстрый старт (разработка)
+Docker не нужен для разработки: он отложен на этап деплоя (см. ниже).
+
+## Быстрый старт (разработка, без Docker)
 
 ```bash
-# 1. Поднять PostgreSQL
-docker compose -f docker-compose.dev.yml up -d
+# 1. Создать БД (один раз), например через psql:
+#    psql -U postgres -c "CREATE DATABASE taskmanager"
 
 # 2. Установить зависимости и подготовить .env
 npm install
 cp .env.example .env   # задайте SESSION_SECRET (openssl rand -base64 32)
+#    DATABASE_URL по умолчанию: postgresql://postgres:postgres@localhost:5432/taskmanager
 
 # 3. Применить миграции и заполнить демо-данными
 npm run db:migrate
@@ -30,14 +33,10 @@ npm run dev            # http://localhost:3000
 
 Worker (планировщик уведомлений) в режиме разработки: `npm run worker`.
 
-## Полный запуск через Docker
+## Docker (отложено, для будущего деплоя)
 
-```bash
-cp .env.example .env   # задайте SESSION_SECRET
-docker compose up --build
-```
-
-Приложение: http://localhost:3000. Миграции применяются автоматически при старте app-контейнера.
+`Dockerfile`, `docker-compose.yml`, `docker-compose.dev.yml` лежат в репозитории на будущее
+(self-hosted деплой), но в разработке не используются и пока не верифицированы сборкой.
 
 ## npm-скрипты
 
