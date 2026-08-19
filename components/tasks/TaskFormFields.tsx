@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { AreaDto } from "@/lib/apiClient";
+import { RECURRENCE_LABELS, type RecurrenceKind } from "@/lib/recurrence";
 import { PRIORITY_LABELS, STATUS_LABELS } from "@/lib/taskUtils";
 
 export interface TaskFormState {
@@ -18,6 +19,7 @@ export interface TaskFormState {
   dueAt: string;
   estimateMin: string;
   tags: string;
+  recurrence: RecurrenceKind;
 }
 
 interface TaskFormFieldsProps {
@@ -28,6 +30,7 @@ interface TaskFormFieldsProps {
 
 const statusOptions = Object.entries(STATUS_LABELS);
 const priorityOptions = Object.entries(PRIORITY_LABELS);
+const recurrenceOptions = Object.entries(RECURRENCE_LABELS);
 
 export function TaskFormFields({ value, areas, onChange }: TaskFormFieldsProps) {
   const projectOptions: [string, string][] = areas.flatMap((area) =>
@@ -97,6 +100,12 @@ export function TaskFormFields({ value, areas, onChange }: TaskFormFieldsProps) 
           />
         </div>
       </div>
+      <FormSelect
+        label="Повтор"
+        value={value.recurrence}
+        options={recurrenceOptions}
+        onChange={(recurrence) => onChange({ recurrence: recurrence as RecurrenceKind })}
+      />
       <div className="space-y-1.5">
         <Label htmlFor="task-tags">Теги (через запятую)</Label>
         <Input

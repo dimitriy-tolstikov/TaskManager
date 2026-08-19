@@ -7,6 +7,7 @@ import { TaskFormFields, type TaskFormState } from "@/components/tasks/TaskFormF
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { deleteTask, updateTask, type AreaDto, type TaskDto } from "@/lib/apiClient";
+import { recurrenceKindFromRrule } from "@/lib/recurrence";
 import { toLocalInputValue } from "@/lib/taskUtils";
 
 interface TaskDialogBodyProps {
@@ -26,6 +27,7 @@ function toFormState(task: TaskDto): TaskFormState {
     dueAt: toLocalInputValue(task.dueAt),
     estimateMin: task.estimateMin === null ? "" : String(task.estimateMin),
     tags: task.tags.map(({ tag }) => tag.name).join(", "),
+    recurrence: recurrenceKindFromRrule(task.recurrence?.rrule),
   };
 }
 
@@ -54,6 +56,7 @@ export function TaskDialogBody({ task, areas, onClose, onChanged }: TaskDialogBo
           .split(",")
           .map((tag) => tag.trim())
           .filter(Boolean),
+        recurrence: form.recurrence,
       });
       await onChanged();
       onClose();

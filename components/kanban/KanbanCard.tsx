@@ -1,6 +1,7 @@
 "use client";
 
 import { useDraggable } from "@dnd-kit/core";
+import { Repeat } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import type { TaskDto } from "@/lib/apiClient";
@@ -51,6 +52,7 @@ export function KanbanCard({ task, onOpen }: KanbanCardProps) {
             · {formatDueDate(task.dueAt)}
           </span>
         )}
+        {task.recurrence && <Repeat className="size-3.5" aria-label="Повторяющаяся задача" />}
       </div>
       <div className="mt-1.5">
         <Badge variant={priorityVariant[task.priority]}>{PRIORITY_LABELS[task.priority]}</Badge>
