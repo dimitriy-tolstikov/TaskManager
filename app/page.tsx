@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-import { LogoutButton } from "@/components/auth/LogoutButton";
+import { TasksApp } from "@/components/tasks/TasksApp";
 import { getSession } from "@/lib/auth";
 
 export default async function HomePage() {
@@ -9,11 +9,5 @@ export default async function HomePage() {
     redirect("/login");
   }
 
-  return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-4 p-4">
-      <h1 className="text-2xl font-semibold">Task Manager</h1>
-      <p className="text-muted-foreground">Вы вошли как {session.email}</p>
-      <LogoutButton />
-    </main>
-  );
+  return <TasksApp userEmail={session.email} />;
 }
