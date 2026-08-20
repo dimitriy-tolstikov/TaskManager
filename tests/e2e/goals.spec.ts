@@ -46,8 +46,11 @@ test("goals tab renders, overdue goal can be acknowledged in the today view", as
       .last();
     await expect(card.getByText("Просрочена")).toBeVisible();
 
+    // A daily 00:00–00:01 goal has one overdue instance per lookback day, so a
+    // single ack removes exactly one card, not all of them.
+    const beforeAck = await page.getByText(name).count();
     await card.getByRole("button", { name: "Закрыть" }).click();
-    await expect(page.getByText(name)).toHaveCount(0);
+    await expect(page.getByText(name)).toHaveCount(beforeAck - 1);
   } finally {
     // Cleanup: remove the goal created by this test from the local database.
     await page.request.delete(`/api/goals/${goal.id}`);
