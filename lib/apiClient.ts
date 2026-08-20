@@ -149,3 +149,74 @@ export const deleteSubtask = (id: string) =>
   request<{ ok: boolean }>(`/api/subtasks/${id}`, { method: "DELETE" });
 
 export const listTags = () => request<TagDto[]>("/api/tags");
+
+export interface GoalTargetDto {
+  id: string;
+  requiredCount: number;
+  areaId: string | null;
+  projectId: string | null;
+  area: { id: string; name: string } | null;
+  project: { id: string; name: string } | null;
+}
+
+export interface GoalDto {
+  id: string;
+  name: string;
+  startTime: number;
+  endTime: number;
+  daysOfWeek: number[];
+  active: boolean;
+  targets: GoalTargetDto[];
+}
+
+export interface GoalTargetInput {
+  areaId?: string;
+  projectId?: string;
+  requiredCount: number;
+}
+
+export interface GoalPayload {
+  name: string;
+  startTime: number;
+  endTime: number;
+  daysOfWeek: number[];
+  targets: GoalTargetInput[];
+}
+
+export interface GoalDashboardTargetDto {
+  targetId: string;
+  label: string;
+  required: number;
+  done: number;
+}
+
+export interface GoalDashboardEntryDto {
+  instanceId: string;
+  goalId: string;
+  goalName: string;
+  windowStart: string;
+  windowEnd: string;
+  targets: GoalDashboardTargetDto[];
+}
+
+export interface GoalsDashboardDto {
+  current: GoalDashboardEntryDto[];
+  upcomingToday: GoalDashboardEntryDto[];
+  overdue: GoalDashboardEntryDto[];
+}
+
+export const listGoals = () => request<GoalDto[]>("/api/goals");
+
+export const createGoal = (input: GoalPayload) =>
+  request<GoalDto>("/api/goals", { method: "POST", body: JSON.stringify(input) });
+
+export const updateGoal = (id: string, input: Partial<GoalPayload> & { active?: boolean }) =>
+  request<GoalDto>(`/api/goals/${id}`, { method: "PATCH", body: JSON.stringify(input) });
+
+export const deleteGoal = (id: string) =>
+  request<{ ok: boolean }>(`/api/goals/${id}`, { method: "DELETE" });
+
+export const getGoalsDashboard = () => request<GoalsDashboardDto>("/api/goals/dashboard");
+
+export const acknowledgeGoalInstance = (instanceId: string) =>
+  request<{ ok: boolean }>(`/api/goals/instances/${instanceId}/ack`, { method: "POST" });
