@@ -7,6 +7,7 @@ import { GoalsOverdueBadge } from "@/components/goals/GoalsOverdueBadge";
 import { GoalsView } from "@/components/goals/GoalsView";
 import { KanbanBoard } from "@/components/kanban/KanbanBoard";
 import { AppSidebar } from "@/components/layout/AppSidebar";
+import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { QuickAdd } from "@/components/tasks/QuickAdd";
 import { TaskDialog } from "@/components/tasks/TaskDialog";
 import { TaskFiltersPanel } from "@/components/tasks/TaskFiltersPanel";
@@ -108,6 +109,7 @@ export function TasksApp({ userEmail }: { userEmail: string }) {
               count={groupOverdueGoals(dashboard.overdue).length}
               onClick={() => setView("today")}
             />
+            <ThemeToggle />
             <ViewTabs view={view} onChange={setView} />
           </div>
         </div>
