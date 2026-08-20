@@ -70,6 +70,7 @@ const PAIRS = [
   ["secondary-foreground", "secondary", "текст на secondary"],
   ["accent-foreground", "accent", "текст на accent (hover)"],
   ["destructive", "background", "destructive (просрочка/ошибки)"],
+  ["destructive-foreground", "destructive", "текст на destructive-кнопке/бейдже"],
   ["sidebar-foreground", "sidebar", "текст сайдбара"],
   ["sidebar-primary-foreground", "sidebar-primary", "primary сайдбара"],
   ["border", "background", "границы (не текст, цель 3:1)"],
