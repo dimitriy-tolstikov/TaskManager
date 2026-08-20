@@ -3,12 +3,13 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { GoalDashboardEntryDto } from "@/lib/apiClient";
-import { formatClock, formatRemaining } from "@/lib/goalFormat";
+import { formatClock, formatDayDate, formatRemaining } from "@/lib/goalFormat";
 import { cn } from "@/lib/utils";
 
 interface GoalEntryCardProps {
   entry: GoalDashboardEntryDto;
   variant: "current" | "overdue" | "upcoming";
+  missedCount?: number;
   onAck?: () => void;
 }
 
@@ -19,10 +20,10 @@ function statusLine(entry: GoalDashboardEntryDto, variant: string): string {
   if (variant === "upcoming") {
     return `Начнётся в ${formatClock(entry.windowStart)}`;
   }
-  return `Окно ${formatClock(entry.windowStart)}–${formatClock(entry.windowEnd)}`;
+  return `${formatDayDate(entry.windowStart)}, окно ${formatClock(entry.windowStart)}–${formatClock(entry.windowEnd)}`;
 }
 
-export function GoalEntryCard({ entry, variant, onAck }: GoalEntryCardProps) {
+export function GoalEntryCard({ entry, variant, missedCount = 1, onAck }: GoalEntryCardProps) {
   return (
     <div
       className={cn(
@@ -61,6 +62,7 @@ export function GoalEntryCard({ entry, variant, onAck }: GoalEntryCardProps) {
       {variant === "overdue" && onAck && (
         <div className="mt-2 flex items-center gap-2">
           <Badge variant="destructive">Просрочена</Badge>
+          {missedCount > 1 && <Badge variant="outline">пропущено окон: {missedCount}</Badge>}
           <Button variant="outline" size="sm" onClick={onAck}>
             Закрыть
           </Button>

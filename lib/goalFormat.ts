@@ -38,6 +38,10 @@ export function formatClock(iso: string): string {
   return formatMinutes(date.getHours() * 60 + date.getMinutes());
 }
 
+export function formatDayDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("ru-RU", { day: "numeric", month: "short" });
+}
+
 export function formatRemaining(toIso: string, now = new Date()): string {
   const diffMin = Math.max(0, Math.round((new Date(toIso).getTime() - now.getTime()) / 60_000));
   const hours = Math.floor(diffMin / 60);

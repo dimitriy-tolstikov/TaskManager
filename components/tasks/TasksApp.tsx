@@ -19,6 +19,7 @@ import {
   initialCalendarState,
   type CalendarState,
 } from "@/lib/calendarUtils";
+import { groupOverdueGoals } from "@/lib/goalGrouping";
 import { useAreas } from "@/lib/hooks/useAreas";
 import { useGoalsDashboard } from "@/lib/hooks/useGoalsDashboard";
 import { useTaskActions } from "@/lib/hooks/useTaskActions";
@@ -103,7 +104,10 @@ export function TasksApp({ userEmail }: { userEmail: string }) {
         <div className="flex items-center justify-between gap-3">
           <h1 className="text-lg font-semibold">{viewHeading(view, areas, filters)}</h1>
           <div className="flex items-center gap-3">
-            <GoalsOverdueBadge count={dashboard.overdue.length} onClick={() => setView("today")} />
+            <GoalsOverdueBadge
+              count={groupOverdueGoals(dashboard.overdue).length}
+              onClick={() => setView("today")}
+            />
             <ViewTabs view={view} onChange={setView} />
           </div>
         </div>

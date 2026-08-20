@@ -2,6 +2,7 @@
 
 import { GoalEntryCard } from "@/components/goals/GoalEntryCard";
 import type { GoalsDashboardDto } from "@/lib/apiClient";
+import { groupOverdueGoals } from "@/lib/goalGrouping";
 
 interface GoalsTodaySectionProps {
   dashboard: GoalsDashboardDto;
@@ -9,8 +10,8 @@ interface GoalsTodaySectionProps {
 }
 
 export function GoalsTodaySection({ dashboard, onAck }: GoalsTodaySectionProps) {
-  const count =
-    dashboard.current.length + dashboard.overdue.length + dashboard.upcomingToday.length;
+  const overdueGroups = groupOverdueGoals(dashboard.overdue);
+  const count = dashboard.current.length + overdueGroups.length + dashboard.upcomingToday.length;
   if (count === 0) {
     return null;
   }
@@ -24,12 +25,13 @@ export function GoalsTodaySection({ dashboard, onAck }: GoalsTodaySectionProps) 
         {dashboard.current.map((entry) => (
           <GoalEntryCard key={entry.instanceId} entry={entry} variant="current" />
         ))}
-        {dashboard.overdue.map((entry) => (
+        {overdueGroups.map((group) => (
           <GoalEntryCard
-            key={entry.instanceId}
-            entry={entry}
+            key={group.latest.goalId}
+            entry={group.latest}
             variant="overdue"
-            onAck={() => onAck(entry.instanceId)}
+            missedCount={group.missedCount}
+            onAck={() => group.instanceIds.forEach((id) => onAck(id))}
           />
         ))}
         {dashboard.upcomingToday.map((entry) => (
