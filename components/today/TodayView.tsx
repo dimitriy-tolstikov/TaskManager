@@ -1,8 +1,14 @@
 "use client";
 
+import { GoalsTodaySection } from "@/components/goals/GoalsTodaySection";
 import { type TaskActions } from "@/components/tasks/TaskRow";
 import { TodaySection } from "@/components/today/TodaySection";
-import type { AreaDto, TaskDto } from "@/lib/apiClient";
+import {
+  acknowledgeGoalInstance,
+  type AreaDto,
+  type GoalsDashboardDto,
+  type TaskDto,
+} from "@/lib/apiClient";
 import { splitTodayTasks } from "@/lib/todayUtils";
 
 interface TodayViewProps {
@@ -10,9 +16,18 @@ interface TodayViewProps {
   areas: AreaDto[];
   isLoading: boolean;
   actions: TaskActions;
+  dashboard: GoalsDashboardDto;
+  onGoalsChanged: () => Promise<void>;
 }
 
-export function TodayView({ tasks, areas, isLoading, actions }: TodayViewProps) {
+export function TodayView({
+  tasks,
+  areas,
+  isLoading,
+  actions,
+  dashboard,
+  onGoalsChanged,
+}: TodayViewProps) {
   if (isLoading) {
     return <p className="py-8 text-center text-sm text-muted-foreground">Загрузка…</p>;
   }
@@ -20,8 +35,14 @@ export function TodayView({ tasks, areas, isLoading, actions }: TodayViewProps) 
   const colorByAreaId = new Map(areas.map((area) => [area.id, area.color]));
   const areaColor = (task: TaskDto) => colorByAreaId.get(task.project.areaId);
 
+  async function handleAck(instanceId: string) {
+    await acknowledgeGoalInstance(instanceId);
+    await onGoalsChanged();
+  }
+
   return (
     <div className="space-y-6">
+      <GoalsTodaySection dashboard={dashboard} onAck={(id) => void handleAck(id)} />
       <TodaySection
         title="Просроченные"
         titleClassName="text-destructive"

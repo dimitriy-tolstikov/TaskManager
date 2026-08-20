@@ -2,7 +2,7 @@
 
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-export type TaskView = "list" | "kanban" | "today" | "calendar";
+export type TaskView = "list" | "kanban" | "today" | "calendar" | "goals";
 
 interface ViewTabsProps {
   view: TaskView;
@@ -17,6 +17,7 @@ export function ViewTabs({ view, onChange }: ViewTabsProps) {
         <TabsTrigger value="kanban">Канбан</TabsTrigger>
         <TabsTrigger value="today">Сегодня</TabsTrigger>
         <TabsTrigger value="calendar">Календарь</TabsTrigger>
+        <TabsTrigger value="goals">Цели</TabsTrigger>
       </TabsList>
     </Tabs>
   );

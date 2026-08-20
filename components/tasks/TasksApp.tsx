@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { CalendarView } from "@/components/calendar/CalendarView";
+import { GoalsOverdueBadge } from "@/components/goals/GoalsOverdueBadge";
+import { GoalsView } from "@/components/goals/GoalsView";
 import { KanbanBoard } from "@/components/kanban/KanbanBoard";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { QuickAdd } from "@/components/tasks/QuickAdd";
@@ -17,11 +19,16 @@ import {
   initialCalendarState,
   type CalendarState,
 } from "@/lib/calendarUtils";
+import { groupOverdueGoals } from "@/lib/goalGrouping";
 import { useAreas } from "@/lib/hooks/useAreas";
+import { useGoalsDashboard } from "@/lib/hooks/useGoalsDashboard";
 import { useTaskActions } from "@/lib/hooks/useTaskActions";
 import { useTasks } from "@/lib/hooks/useTasks";
 
-function viewHeading(areas: AreaDto[], filters: TaskFilterState): string {
+function viewHeading(view: TaskView, areas: AreaDto[], filters: TaskFilterState): string {
+  if (view === "goals") {
+    return "Цели";
+  }
   if (filters.projectId) {
     const area = areas.find((item) => item.id === filters.areaId);
     const project = area?.projects.find((item) => item.id === filters.projectId);
@@ -52,6 +59,7 @@ function scopedFilters(
 
 export function TasksApp({ userEmail }: { userEmail: string }) {
   const { areas, refresh: refreshAreas } = useAreas();
+  const { dashboard, refresh: refreshGoalsDashboard } = useGoalsDashboard();
   const [filters, setFilters] = useState<TaskFilterState>({});
   const [view, setView] = useState<TaskView>("list");
   const [calendar, setCalendar] = useState<CalendarState>(initialCalendarState);
@@ -66,9 +74,9 @@ export function TasksApp({ userEmail }: { userEmail: string }) {
   const selectedTask = tasks.find((task) => task.id === selectedTaskId) ?? null;
 
   const refreshData = useCallback(async () => {
-    await Promise.all([refreshAreas(), refreshTasks()]);
+    await Promise.all([refreshAreas(), refreshTasks(), refreshGoalsDashboard()]);
     setTags(await listTags());
-  }, [refreshAreas, refreshTasks]);
+  }, [refreshAreas, refreshTasks, refreshGoalsDashboard]);
 
   useEffect(() => {
     void listTags().then(setTags);
@@ -94,11 +102,17 @@ export function TasksApp({ userEmail }: { userEmail: string }) {
       />
       <main className="flex h-screen flex-1 flex-col gap-3 overflow-y-auto p-4">
         <div className="flex items-center justify-between gap-3">
-          <h1 className="text-lg font-semibold">{viewHeading(areas, filters)}</h1>
-          <ViewTabs view={view} onChange={setView} />
+          <h1 className="text-lg font-semibold">{viewHeading(view, areas, filters)}</h1>
+          <div className="flex items-center gap-3">
+            <GoalsOverdueBadge
+              count={groupOverdueGoals(dashboard.overdue).length}
+              onClick={() => setView("today")}
+            />
+            <ViewTabs view={view} onChange={setView} />
+          </div>
         </div>
-        <QuickAdd onAdd={onQuickAdd} />
-        {view !== "today" && (
+        {view !== "goals" && <QuickAdd onAdd={onQuickAdd} />}
+        {view !== "today" && view !== "goals" && (
           <TaskFiltersPanel filters={filters} tags={tags} onChange={setFilters} />
         )}
         {view === "list" && <TaskList tasks={tasks} isLoading={isLoading} {...actions} />}
@@ -111,8 +125,16 @@ export function TasksApp({ userEmail }: { userEmail: string }) {
           />
         )}
         {view === "today" && (
-          <TodayView tasks={tasks} areas={areas} isLoading={isLoading} actions={actions} />
+          <TodayView
+            tasks={tasks}
+            areas={areas}
+            isLoading={isLoading}
+            actions={actions}
+            dashboard={dashboard}
+            onGoalsChanged={refreshGoalsDashboard}
+          />
         )}
+        {view === "goals" && <GoalsView areas={areas} onDashboardRefresh={refreshGoalsDashboard} />}
         {view === "calendar" && (
           <CalendarView
             tasks={tasks}
